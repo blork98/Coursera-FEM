@@ -155,7 +155,7 @@ std::vector<double> FEM<dim>::basis_gradient(unsigned int node, double xi_1, dou
 	else if (node == 2)
 	{
 		values[0] = -0.25*(1 + xi_2);
-		values[1] = 0.25*(1 + xi_1);
+		values[1] = 0.25*(1 - xi_1);
 	}
 	else if (node == 3)
 	{
@@ -344,7 +344,7 @@ void FEM<dim>::assemble_system() {
 									for (unsigned int J = 0; J<dim; J++) {
 										//EDIT - Define Klocal. You will need to use the inverse Jacobian ("invJacob") and "detJ"
 										dNA_dXI += basis_gradient(A, quad_points[q1], quad_points[q2])[i] * invJacob[i][I];
-										dNB_dXI += basis_gradient(A, quad_points[q1], quad_points[q2])[j] * invJacob[j][J];
+										dNB_dXI += basis_gradient(B, quad_points[q1], quad_points[q2])[j] * invJacob[j][J];
 										Klocal[A][B] += detJ*quad_weight[q1] * quad_weight[q2]*kappa[i][j]* dNA_dXI* dNB_dXI;
 									}
 								}
