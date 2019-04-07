@@ -211,10 +211,10 @@ void FEM<dim>::define_boundary_conds() {
 			boundary_values[globalNode] = 300.00*(1 + (1.0 / 3.0)*nodeLocation[globalNode][0]);
 		else if ( std::fabs(nodeLocation[globalNode][1] - y_max) < 1e-12)
 			boundary_values[globalNode] = 310.00*(1 + 8.0*nodeLocation[globalNode][0] * nodeLocation[globalNode][0]);
-		else if ( std::fabs(nodeLocation[globalNode][0] - x_min) < 1e-12 )
-			boundary_values[globalNode] = 0;
-		else if	( std::fabs(nodeLocation[globalNode][0] - x_max) < 1e-12)
-			boundary_values[globalNode] = 0;
+		//else if ( std::fabs(nodeLocation[globalNode][0] - x_min) < 1e-12 )
+		//	boundary_values[globalNode] = 0;
+		//else if	( std::fabs(nodeLocation[globalNode][0] - x_max) < 1e-12)
+		//	boundary_values[globalNode] = 0;
 	}
 }
 
@@ -316,7 +316,7 @@ void FEM<dim>::assemble_system() {
 		kappa[0][0] = 385.;
 		kappa[1][1] = 385.;
 
-		double dNA_dXI = 0.0, dNB_dXI = 0.0;
+		double dNA_dXI = 0.0, dNB_dXJ = 0.0;
 
 		//Loop over local DOFs and quadrature points to populate Klocal
 		Klocal = 0.;
@@ -336,16 +336,16 @@ void FEM<dim>::assemble_system() {
 				invJacob.invert(Jacobian);
 				for (unsigned int A = 0; A<dofs_per_elem; A++) {
 					for (unsigned int B = 0; B<dofs_per_elem; B++) {
-						dNA_dXI = 0.0; 
-						dNB_dXI = 0.0;
+						//dNA_dXI = 0.0; 
+						//dNB_dXI = 0.0;
 						for (unsigned int i = 0; i<dim; i++) {
 							for (unsigned int j = 0; j<dim; j++) {
 								for (unsigned int I = 0; I<dim; I++) {
 									for (unsigned int J = 0; J<dim; J++) {
 										//EDIT - Define Klocal. You will need to use the inverse Jacobian ("invJacob") and "detJ"
-										dNA_dXI += basis_gradient(A, quad_points[q1], quad_points[q2])[i] * invJacob[i][I];
-										dNB_dXI += basis_gradient(B, quad_points[q1], quad_points[q2])[j] * invJacob[j][J];
-										Klocal[A][B] += detJ*quad_weight[q1] * quad_weight[q2]*kappa[i][j]* dNA_dXI* dNB_dXI;
+										dNA_dXI = basis_gradient(A, quad_points[q1], quad_points[q2])[i] * invJacob[i][I];
+										dNB_dXJ = basis_gradient(B, quad_points[q1], quad_points[q2])[j] * invJacob[j][J];
+										Klocal[A][B] += detJ*quad_weight[q1] * quad_weight[q2] * kappa[i][j] * dNA_dXI* dNB_dXJ;
 									}
 								}
 							}
