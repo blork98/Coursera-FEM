@@ -39,6 +39,9 @@ It uses the deal.II FEM library.*/
 #include <fstream>
 #include <math.h>
 
+#include <deal.II/lac/solver_cg.h>
+#include <deal.II/lac/precondition.h>
+
 using namespace dealii;
 
 template <int dim>
@@ -85,6 +88,7 @@ public:
 													 //solution name array
 	std::vector<std::string> nodal_solution_names;
 	std::vector<DataComponentInterpretation::DataComponentInterpretation> nodal_data_component_interpretation;
+
 };
 
 // Class constructor for a scalar field
@@ -115,6 +119,14 @@ double FEM<dim>::basis_function(unsigned int node, double xi_1, double xi_2) {
 	double value = 0.; //Store the value of the basis function in this variable
 
 					   //EDIT
+	if (node == 0)
+		value = 0.25*(1 - xi_1)*(1 - xi_2);
+	else if (node == 1)
+		value = 0.25*(1 + xi_1)*(1 - xi_2);
+	else if ( node == 2)
+		value = 0.25*(1 - xi_1)*(1 + xi_2);
+	else if ( node == 3)
+		value = 0.25*(1 + xi_1)*(1 + xi_2);
 
 	return value;
 }
@@ -130,6 +142,26 @@ std::vector<double> FEM<dim>::basis_gradient(unsigned int node, double xi_1, dou
 	std::vector<double> values(dim, 0.0); //Store the value of the gradient of the basis function in this variable
 
 										  //EDIT
+	if (node == 0)
+	{
+		values[0] = -0.25*(1 - xi_2);
+		values[1] = -0.25*(1 - xi_1);
+	}
+	else if (node == 1)
+	{
+		values[0] = 0.25*(1 - xi_2);
+		values[1] = -0.25*(1 + xi_1);
+	}
+	else if (node == 2)
+	{
+		values[0] = -0.25*(1 + xi_2);
+		values[1] = 0.25*(1 + xi_1);
+	}
+	else if (node == 3)
+	{
+		values[0] = 0.25*(1 + xi_2);
+		values[1] = 0.25*(1 + xi_1);
+	}
 
 	return values;
 }
@@ -284,6 +316,8 @@ void FEM<dim>::assemble_system() {
 		kappa[0][0] = 385.;
 		kappa[1][1] = 385.;
 
+		double dNA_dXI = 0.0, dNB_dXI = 0.0;
+
 		//Loop over local DOFs and quadrature points to populate Klocal
 		Klocal = 0.;
 		for (unsigned int q1 = 0; q1<quadRule; q1++) {
@@ -302,11 +336,16 @@ void FEM<dim>::assemble_system() {
 				invJacob.invert(Jacobian);
 				for (unsigned int A = 0; A<dofs_per_elem; A++) {
 					for (unsigned int B = 0; B<dofs_per_elem; B++) {
+						dNA_dXI = 0.0; 
+						dNB_dXI = 0.0;
 						for (unsigned int i = 0; i<dim; i++) {
 							for (unsigned int j = 0; j<dim; j++) {
 								for (unsigned int I = 0; I<dim; I++) {
 									for (unsigned int J = 0; J<dim; J++) {
 										//EDIT - Define Klocal. You will need to use the inverse Jacobian ("invJacob") and "detJ"
+										dNA_dXI += basis_gradient(A, quad_points[q1], quad_points[q2])[i] * invJacob[i][I];
+										dNB_dXI += basis_gradient(A, quad_points[q1], quad_points[q2])[j] * invJacob[j][J];
+										Klocal[A][B] += detJ*quad_weight[q1] * quad_weight[q2]*kappa[i][j]* dNA_dXI* dNB_dXI;
 									}
 								}
 							}
@@ -321,6 +360,7 @@ void FEM<dim>::assemble_system() {
 			//You would assemble F here if it were nonzero.
 			for (unsigned int B = 0; B<dofs_per_elem; B++) {
 				//EDIT - Assemble K from Klocal (you can look at HW2)
+				K.add(local_dof_indices[A], local_dof_indices[B], Klocal[A][B]);
 			}
 		}
 
@@ -335,9 +375,14 @@ template <int dim>
 void FEM<dim>::solve() {
 
 	//Solve for D
-	SparseDirectUMFPACK  A;
-	A.initialize(K);
-	A.vmult(D, F); //D=K^{-1}*F
+	//SparseDirectUMFPACK  A;
+	//A.initialize(K);
+	//A.vmult(D, F); //D=K^{-1}*F
+
+	//Use CG method
+	SolverControl           solver_control(1000, 1e-12);
+	SolverCG<>              solver(solver_control);
+	solver.solve(K, D, F, PreconditionIdentity());
 
 }
 
