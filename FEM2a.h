@@ -211,9 +211,9 @@ void FEM<dim>::define_boundary_conds() {
 			boundary_values[globalNode] = 300.00*(1 + (1.0 / 3.0)*nodeLocation[globalNode][0]);
 		else if ( std::fabs(nodeLocation[globalNode][1] - y_max) < 1e-12)
 			boundary_values[globalNode] = 310.00*(1 + 8.0*nodeLocation[globalNode][0] * nodeLocation[globalNode][0]);
-		else if ( std::fabs(nodeLocation[globalNode][1] - x_min) < 1e-12 )
+		else if ( std::fabs(nodeLocation[globalNode][0] - x_min) < 1e-12 )
 			boundary_values[globalNode] = 0;
-		else if	( std::fabs(nodeLocation[globalNode][1] - x_max) < 1e-12)
+		else if	( std::fabs(nodeLocation[globalNode][0] - x_max) < 1e-12)
 			boundary_values[globalNode] = 0;
 	}
 }
