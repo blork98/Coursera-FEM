@@ -215,6 +215,7 @@ void FEM<dim>::define_boundary_conds() {
 		//	boundary_values[globalNode] = 0;
 		//else if	( std::fabs(nodeLocation[globalNode][0] - x_max) < 1e-12)
 		//	boundary_values[globalNode] = 0;
+		//Note: Why no need for BC along the edges x=0 and x = x_max????
 	}
 }
 
